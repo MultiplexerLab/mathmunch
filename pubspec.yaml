@@ -1,0 +1,49 @@
+name: mathmunch
+description: MathMunch — Kids Math Gaming App for Ages 3–6
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Navigation
+  go_router: ^14.2.0
+
+  # Local storage (offline-first)
+  hive_flutter: ^1.1.0
+
+  # Audio
+  audioplayers: ^6.0.0
+  flutter_tts: ^4.0.0
+
+  # Animations
+  flutter_animate: ^4.5.0
+
+  # Utilities
+  crypto: ^3.0.3          # password hashing
+  uuid: ^4.4.0            # unique IDs
+  intl: ^0.19.0           # date/number formatting
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/avatars/
+    - assets/images/worlds/
+    - assets/images/stickers/
+    - assets/images/ui/
+    - assets/audio/sfx/
+    - assets/audio/narration/
+    - assets/audio/music/
