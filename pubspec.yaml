@@ -40,10 +40,4 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/avatars/
-    - assets/images/worlds/
-    - assets/images/stickers/
-    - assets/images/ui/
     - assets/audio/sfx/
-    - assets/audio/narration/
-    - assets/audio/music/

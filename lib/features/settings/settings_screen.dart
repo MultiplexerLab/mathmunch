@@ -46,12 +46,6 @@ class SettingsScreen extends ConsumerWidget {
             secondary: const Icon(Icons.volume_up_outlined),
           ),
           SwitchListTile(
-            title: const Text('Background Music'),
-            value: settings.musicEnabled,
-            onChanged: (v) => notifier.setMusic(v),
-            secondary: const Icon(Icons.music_note_outlined),
-          ),
-          SwitchListTile(
             title: const Text('Read Questions Aloud'),
             subtitle: const Text('Voice narrates each question and feedback'),
             value: settings.narrationEnabled,
@@ -68,15 +62,6 @@ class SettingsScreen extends ConsumerWidget {
             value: settings.hintsAlwaysOn,
             onChanged: (v) => notifier.setHintsAlwaysOn(v),
             secondary: const Icon(Icons.lightbulb_outline),
-          ),
-
-          // FR-41 — Daily time limit
-          ListTile(
-            leading: const Icon(Icons.timer_outlined),
-            title: const Text('Daily Time Limit'),
-            subtitle: Text('${settings.dailyTimeLimitMinutes} minutes'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _editTimeLimit(context, ref, settings.dailyTimeLimitMinutes),
           ),
 
           // ---- Account ----
@@ -171,49 +156,6 @@ class SettingsScreen extends ConsumerWidget {
                         child.copyWith(age: selected),
                       );
                 }
-                Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _editTimeLimit(
-      BuildContext context, WidgetRef ref, int current) async {
-    int selected = current;
-    await showDialog(
-      context: context,
-      builder: (_) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: const Text('Daily Time Limit'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('$selected minutes',
-                  style: const TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w700)),
-              Slider(
-                value: selected.toDouble(),
-                min: AppConstants.minTimeLimitMinutes.toDouble(),
-                max: AppConstants.maxTimeLimitMinutes.toDouble(),
-                divisions: (AppConstants.maxTimeLimitMinutes -
-                        AppConstants.minTimeLimitMinutes) ~/
-                    5,
-                label: '$selected min',
-                onChanged: (v) => setState(() => selected = v.round()),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancel')),
-            ElevatedButton(
-              onPressed: () {
-                ref.read(settingsProvider.notifier).setTimeLimit(selected);
                 Navigator.pop(ctx);
               },
               child: const Text('Save'),
