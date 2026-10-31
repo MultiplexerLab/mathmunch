@@ -31,12 +31,38 @@ class AppRoutes {
   static const settings = '/settings';
 }
 
+// Bridges authStateProvider changes into go_router's redirect re-evaluation
+// without recreating the GoRouter itself. appRouterProvider must build the
+// GoRouter exactly once -- MaterialApp.router treats a new GoRouter instance
+// as a brand-new navigator and resets to initialLocation, silently discarding
+// any navigation (e.g. the context.go() right after registration) that was
+// in flight when the instance changed.
+class _AuthRefreshListenable extends ChangeNotifier {
+  _AuthRefreshListenable(Ref ref) {
+    _subscription = ref.listen<AuthState>(
+      authStateProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+
+  late final ProviderSubscription<AuthState> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.close();
+    super.dispose();
+  }
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final refresh = _AuthRefreshListenable(ref);
+  ref.onDispose(refresh.dispose);
 
   return GoRouter(
     initialLocation: AppRoutes.splash,
+    refreshListenable: refresh,
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
       final isLoggedIn = authState.hasParentAccount;
       final hasChildren =
           (authState.parentAccount?.childProfileIds ?? []).isNotEmpty;
