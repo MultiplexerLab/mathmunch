@@ -9,8 +9,8 @@ Kids Math Gaming App • Ages 3–6
 | | |
 |---|---|
 | **Document ref** | MM-SRS-001 |
-| **Version** | 1.2 — Post-QA engineering fixes |
-| **Date** | 31 October 2026 |
+| **Version** | 1.3 — Account deletion added |
+| **Date** | 02 November 2026 |
 | **Author** | Product & Engineering Team |
 | **Status** | Draft — For Review (status column maintained by engineering) |
 | **Target platform** | iOS & Android (mobile-first) |
@@ -22,6 +22,7 @@ Kids Math Gaming App • Ages 3–6
 | 1.0 | — | Initial SRS |
 | 1.1 | 18 Jul 2026 | Implementation status added |
 | 1.2 | 31 Oct 2026 | Post-QA engineering pass: fixed a router bug that could strand new users on the splash screen during onboarding; corrected `pubspec.yaml` to stop declaring unused/missing asset directories and added the real sound-effect files that were silently missing; removed two Settings controls (Background Music, Daily Time Limit) that were visible but not wired to any actual behavior |
+| 1.3 | 02 Nov 2026 | Added in-app account deletion (new FR-46), required by Apple App Store Review Guideline 5.1.1(v) for apps that support account creation. Also fixed a bug found while testing it: creating a child profile could duplicate the new child in the in-memory profile list. |
 
 ---
 
@@ -124,6 +125,8 @@ Status key — Implemented: built and working | Partial: built but incomplete/no
 
 > **Engineering note (31 Oct 2026):** a full click-through test of this flow found that account registration could silently strand the user back on the splash screen instead of advancing to child setup. Root cause: the app router was being rebuilt from scratch on every auth-state change, which reset in-flight navigation. Fixed — see NFR 4.3.
 
+> **Engineering note (02 Nov 2026):** a test written to verify account deletion (FR-46) found that `createChild()` duplicated the new child profile in the in-memory list used by FR-04 — the write to Hive was correct, but a redundant manual state update appended the child a second time on top of a rebuild that already included it. Fixed.
+
 ### 3.2 Home screen
 
 | ID | Requirement | Priority | Screen | Status |
@@ -204,6 +207,7 @@ Status key — Implemented: built and working | Partial: built but incomplete/no
 | FR-43 | A 'hints always on' toggle shall force mascot hints to appear after every question rather than on a delay. | Medium | Settings | Implemented |
 | FR-44 | A progress reset option shall be available behind a confirmation dialog. | Medium | Settings | Implemented |
 | FR-45 | The parent's email address shall be editable with re-verification. | Low | Settings | Not Implemented — UI entry exists but its tap handler is an empty stub; no re-verification flow. |
+| FR-46 | Parents shall be able to permanently delete their account, all child profiles, and all associated progress data from within the app, behind a confirmation dialog. | High | Settings | Implemented — Added 02 Nov 2026 per Apple App Store Review Guideline 5.1.1(v), which requires in-app account deletion for any app that supports in-app account creation; this was previously missing entirely. |
 
 ---
 
@@ -238,6 +242,7 @@ Each item below is annotated with its implementation status, verified against th
 - Parent email and password shall be stored encrypted (AES-256 at rest) — **[Not Implemented]** Hive boxes are opened without an encryption cipher; only the password value is SHA-256 hashed, box contents are not encrypted at rest.
 - No third-party analytics, advertising, or tracking SDKs shall be included — **[Implemented]**
 - Parent PIN shall be required to access any parent-facing screen — **[Implemented]**
+- Users shall be able to delete their account and associated data from within the app (Apple Guideline 5.1.1v) — **[Implemented, added 02 Nov 2026]** See FR-46.
 - App shall comply with COPPA (US), GDPR-K (EU), and UK GDPR (UK) at launch — **[Not Verified]** Legal/compliance audit item, not code-verifiable.
 - App Store age rating: 4+ (Apple) / Everyone (Google Play) — **[Not Verified]** App store listing configuration, outside app code.
 
