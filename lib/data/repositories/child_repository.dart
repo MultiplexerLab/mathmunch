@@ -29,8 +29,11 @@ class ChildRepository extends Notifier<List<ChildProfile>> {
       parentAccountId: account.id,
     );
     await HiveService.childBox.put(child.id, child);
+    // addChildProfile() mutates authStateProvider, which this notifier
+    // watches -- that alone invalidates/rebuilds this provider's state from
+    // Hive (now including this child), so no manual state update is needed
+    // here. Appending again on top of that rebuilt state would duplicate it.
     await ref.read(authStateProvider.notifier).addChildProfile(child.id);
-    state = [...state, child];
     return child;
   }
 
