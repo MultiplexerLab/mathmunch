@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mathmunch/core/constants/app_colors.dart';
 import 'package:mathmunch/core/constants/app_constants.dart';
+import 'package:mathmunch/core/router/app_router.dart';
+import 'package:mathmunch/data/repositories/auth_repository.dart';
 import 'package:mathmunch/data/repositories/child_repository.dart';
 import 'package:mathmunch/data/repositories/progress_repository.dart';
 import 'package:mathmunch/features/settings/providers/settings_provider.dart';
@@ -82,6 +85,17 @@ class SettingsScreen extends ConsumerWidget {
                 style: TextStyle(color: AppColors.incorrect)),
             subtitle: const Text('This cannot be undone'),
             onTap: () => _confirmReset(context, ref, child?.id),
+          ),
+          // Apple App Store Review Guideline 5.1.1(v) — account deletion
+          // must be available in-app, not just via a website/support request.
+          ListTile(
+            leading:
+                const Icon(Icons.delete_forever, color: AppColors.incorrect),
+            title: const Text('Delete Account',
+                style: TextStyle(color: AppColors.incorrect)),
+            subtitle: const Text(
+                'Permanently deletes your account, all child profiles, and all progress'),
+            onTap: () => _confirmDeleteAccount(context, ref),
           ),
         ],
       ),
@@ -191,6 +205,35 @@ class SettingsScreen extends ConsumerWidget {
     if (confirmed == true) {
       await ref.read(progressRepositoryProvider).resetAllProgress(childId);
       await ref.read(childListProvider.notifier).resetProgress(childId);
+    }
+  }
+
+  Future<void> _confirmDeleteAccount(
+      BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete account?'),
+        content: const Text(
+            'This permanently deletes your parent account, every child '
+            'profile, and all stars, stickers, and progress on this device. '
+            'This cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          ElevatedButton(
+            style:
+                ElevatedButton.styleFrom(backgroundColor: AppColors.incorrect),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete Account'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(authStateProvider.notifier).deleteAccount();
+      if (context.mounted) context.go(AppRoutes.onboarding);
     }
   }
 }

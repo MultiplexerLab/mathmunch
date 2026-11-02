@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mathmunch/data/local/hive_service.dart';
 import 'package:mathmunch/data/models/parent_account.dart';
+import 'package:mathmunch/data/repositories/progress_repository.dart';
 import 'package:uuid/uuid.dart';
 
 // ---------------------------------------------------------------------------
@@ -111,6 +112,26 @@ class AuthRepository extends Notifier<AuthState> {
   }
 
   void logout() {
+    state = const AuthState();
+  }
+
+  /// Apple App Store Review Guideline 5.1.1(v) -- apps that support account
+  /// creation must also support account deletion from within the app.
+  /// Permanently deletes the parent account, every child profile under it,
+  /// and all progress/session/settings data tied to this device.
+  Future<void> deleteAccount() async {
+    final account = state.parentAccount;
+    if (account == null) return;
+
+    final progress = ref.read(progressRepositoryProvider);
+    for (final childId in account.childProfileIds) {
+      await progress.resetAllProgress(childId);
+      await HiveService.childBox.delete(childId);
+    }
+
+    await HiveService.settingsBox.clear();
+    await HiveService.parentBox.delete(account.id);
+
     state = const AuthState();
   }
 }
