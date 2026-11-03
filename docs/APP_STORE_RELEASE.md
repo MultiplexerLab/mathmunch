@@ -1,23 +1,23 @@
 # App Store release checklist
 
-**Status: version 1.0.0 (build 2) uploaded for internal TestFlight on 2026-11-03.** Xcode confirmed upload success and Apple package processing has begun; the TestFlight build list had not yet refreshed at the last check. This includes the client's latest `master` changes through `5cb1258` (account deletion and duplicate-child fix). Build 1 was uploaded on 2026-10-31; the owner reports inviting internal testers. No App Store submission or production release has been performed.
+**Status: version 1.0.0 (build 3) uploaded to App Store Connect on 2026-11-04.** Xcode confirmed upload success. The TestFlight build list had not yet displayed build 3 at the last check; processing and compliance status are pending. This build raises the app's minimum iOS version to 15.0 and is not restricted to internal TestFlight, so after Apple's processing it can be considered for TestFlight and App Store submission. Builds 1 and 2 were uploaded; build 2 includes the client's latest `master` changes through `5cb1258` (account deletion and duplicate-child fix). No App Store submission or production release has been performed.
 
 ## Repository preparation (done)
 
-- CocoaPods integration (`ios/Podfile`, iOS 13 target, `ios/Podfile.lock`); Debug/Profile/Release xcconfig files include the Pods configs. Open `ios/Runner.xcworkspace`.
+- CocoaPods integration (`ios/Podfile`, iOS 15 minimum); Debug/Profile/Release xcconfig files include the Pods configs. Open `ios/Runner.xcworkspace`.
 - iOS display name corrected to `MathMunch`.
 - App icon artwork (all required sizes) and the matching launch image approved by the owner; promotional iPhone and iPad screenshot artwork approved by the owner.
 - Screenshots captured on iOS 26.2 simulators and exported at App Store Connect dimensions.
 - Known iPad issue (not changed): the Parent PIN pad in onboarding stretches to the full width and needs scrolling to reach the Create Account button.
 - Runner Release uses manual Apple Distribution signing for team `2FXZ46CJ8Q` and `MathMunch App Store Distribution`; Debug/Profile settings are unchanged. Signing is scoped to the app target, not Pods.
-- Signed archive: `build/ios/archive/MathMunch-TestFlight.xcarchive`.
-- Exported IPA: `build/ios/ipa/internal-testflight/mathmunch.ipa`. The export explicitly restricts this build to internal TestFlight; it cannot be distributed externally or through the App Store.
-- Local verification: analyzer clean, all 92 tests passed, archive and export succeeded, IPA signature verified, embedded profile/team/bundle checked, debugging entitlement disabled, internal-only export option confirmed. The owner reports a successful physical-iPad run; this is not full device QA.
-- Apple initially rejected the upload because `App.framework` lacked `MinimumOSVersion`. Added `13.0` to `ios/Flutter/AppFrameworkInfo.plist`, rebuilt, and successfully uploaded the corrected archive; refreshed the local IPA to match.
-- Non-blocking Apple warnings: iOS 15 or later will be required for uploads starting April 2027; `objective_c.framework` has no supplied dSYM. The matching native asset has no debug information, so generating an empty dSYM does not recover source-level crash symbols. Other archive dSYMs remain preserved.
+- Signed archive: `build/ios/archive/MathMunch-TestFlight-1.0.0-3.xcarchive`.
+- Build 3 uses a standard App Store Connect upload, not an internal-only export.
+- Local verification: analyzer clean, all 92 tests passed, archive and upload succeeded, signature verified, embedded profile/team/bundle/version checked, and app `MinimumOSVersion` is 15.0. Apple's upload log no longer contains warning 90068. The owner reports a successful physical-iPad run on an earlier build; this is not full device QA.
+- Apple initially rejected build 1 because `App.framework` lacked `MinimumOSVersion`; this was fixed. Builds 1 and 2 had non-blocking warning 90068 because the app deployment target was iOS 13. Build 3 sets the app/project/Podfile minimum to iOS 15; Apple accepted the upload without warning 90068. Some embedded frameworks advertise their own lower compatible OS versions, which does not lower the containing app's `MinimumOSVersion`.
+- Xcode may continue warning that `objective_c.framework` has no supplied dSYM. The matching native asset has no debug information, so generating an empty dSYM does not recover source-level crash symbols. Other archive dSYMs remain preserved.
 
 Toolchain used: Flutter 3.38.7 / Dart 3.10.7, Xcode 26.2 (iOS SDK 26.2), CocoaPods 1.16.2.
-Version/build: `1.0.0+2`; bundle ID `com.mathmunch.mathmunch`.
+Version/build: `1.0.0+3`; bundle ID `com.mathmunch.mathmunch`; minimum app iOS `15.0`.
 
 ## Remaining gates (owner/developer actions)
 
@@ -60,7 +60,7 @@ References: [Apple platform version fields](https://developer.apple.com/help/app
 ## Future-build reminders
 
 - Retain `MinimumOSVersion` in Flutter's framework plist and check embedded framework metadata before uploading.
-- Apple's upload warning says iOS 15 or later is required starting April 2027. Recheck Apple's requirements before the next upload and coordinate a deployment-target change with the developer; do not silently drop iOS 13/14 support.
+- Build 3 raises the minimum supported OS to iOS 15. Users on iOS 13/14 can no longer install/update this release; evaluate the affected installed base and communicate this compatibility change.
 - Check whether an updated native dependency supplies genuine `objective_c.framework` debug symbols. Do not manufacture an empty dSYM to hide the warning.
 - Use an unused build number; export the publication build without `testFlightInternalTestingOnly`.
 
@@ -83,6 +83,6 @@ xcodebuild -exportArchive \
 
 These commands require the named profile and a matching Apple Distribution identity in the signing Mac's keychain. Do not pass provisioning profile overrides globally to `xcodebuild`: Pods frameworks do not support app provisioning profiles. Do not use this App Store profile to run directly on an iPad; use development signing for Debug.
 
-Before any future upload, refresh App Store Connect, confirm the intended build number is unused, review the version, and obtain explicit upload authorization. Confirm Apple processing/export-compliance status and tester build availability. Preserve the archive and its dSYMs for crash symbolication. A future external/App Store build must be exported without the internal-only restriction. **Stop before Upload/Submit/Release**, which require explicit authorization.
+Before any future upload, refresh App Store Connect, confirm the intended build number is unused, review the version, and obtain explicit upload authorization. Confirm Apple processing/export-compliance status and tester build availability. Preserve the archive and its dSYMs for crash symbolication. **Stop before App Review submission or production release**, which require explicit authorization.
 
-Builds `1` and `2` are uploaded; do not reuse either build number. Build `2` is pending Apple processing at the last check. Future uploads need a new build number and explicit authorization. Upload logs are local under `build/ios/upload-1.0.0-2.log`; do not publish authentication-related distribution logs. Confirm processing succeeds and assign build 2 to the existing internal group in [MathMunch TestFlight](https://appstoreconnect.apple.com/teams/8adb6439-9332-474f-8472-19fc898a3c88/apps/6829225182/testflight) if it is not automatically available. The owner reports inviting internal testers; no tester invitations were sent by this preparation agent.
+Builds `1`, `2`, and `3` are uploaded; do not reuse these build numbers. Build 3 is pending processing at the last check. Upload logs are local under `build/ios/`; do not publish authentication-related distribution logs. Confirm processing/compliance status and add build 3 to the existing internal group in [MathMunch TestFlight](https://appstoreconnect.apple.com/teams/8adb6439-9332-474f-8472-19fc898a3c88/apps/6829225182/testflight) if necessary. The owner manages tester invitations; none were sent by this preparation agent.
