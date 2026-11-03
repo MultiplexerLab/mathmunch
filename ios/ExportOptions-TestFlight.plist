@@ -17,7 +17,5 @@
 		<key>com.mathmunch.mathmunch</key>
 		<string>MathMunch App Store Distribution</string>
 	</dict>
-	<key>testFlightInternalTestingOnly</key>
-	<true/>
 </dict>
 </plist>
