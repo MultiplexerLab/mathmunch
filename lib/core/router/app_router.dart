@@ -14,6 +14,8 @@ import 'package:mathmunch/features/reward/reward_screen.dart';
 import 'package:mathmunch/features/settings/settings_screen.dart';
 import 'package:mathmunch/features/splash/splash_screen.dart';
 import 'package:mathmunch/features/sticker_book/sticker_book_screen.dart';
+import 'package:mathmunch/features/time_limit/time_limit_screen.dart';
+import 'package:mathmunch/shared/services/daily_limit_service.dart';
 
 // Route names
 class AppRoutes {
@@ -29,6 +31,7 @@ class AppRoutes {
   static const parentPin = '/parent-pin';
   static const parentDashboard = '/parent-dashboard';
   static const settings = '/settings';
+  static const timeLimit = '/time-limit';
 }
 
 // Bridges authStateProvider changes into go_router's redirect re-evaluation
@@ -77,6 +80,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.childSetup;
       }
       if (isLoggedIn && hasChildren && isOnboarding) return AppRoutes.home;
+
+      // FR-41 — block starting a new level once the daily time limit is
+      // reached, regardless of entry point (Home, Reward "Play Again", etc).
+      // A level already in progress is left alone; the limit is enforced at
+      // the next natural breakpoint rather than interrupting mid-question.
+      if (state.matchedLocation == AppRoutes.gameplay &&
+          ref.read(dailyLimitStatusProvider).reached) {
+        return AppRoutes.timeLimit;
+      }
+
       return null;
     },
     routes: [
@@ -143,6 +156,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.settings,
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.timeLimit,
+        builder: (context, state) => const TimeLimitScreen(),
       ),
     ],
   );
