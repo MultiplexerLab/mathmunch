@@ -98,6 +98,19 @@ class ProgressRepository {
     return result;
   }
 
+  /// Total seconds played today across all sessions, for FR-41 (daily
+  /// time limit). "Today" is the device's local calendar day.
+  int secondsPlayedToday(String childId) {
+    final now = DateTime.now();
+    return HiveService.sessionsBox.values
+        .where((s) =>
+            s.childId == childId &&
+            s.playedAt.year == now.year &&
+            s.playedAt.month == now.month &&
+            s.playedAt.day == now.day)
+        .fold<int>(0, (sum, s) => sum + s.durationSeconds);
+  }
+
   Future<void> resetAllProgress(String childId) async {
     final progressKeys = HiveService.progressBox.keys
         .where((k) => k.toString().startsWith('${childId}_'))

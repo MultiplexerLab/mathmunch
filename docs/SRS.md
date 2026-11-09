@@ -9,8 +9,8 @@ Kids Math Gaming App • Ages 3–6
 | | |
 |---|---|
 | **Document ref** | MM-SRS-001 |
-| **Version** | 1.3 — Account deletion added |
-| **Date** | 02 November 2026 |
+| **Version** | 1.4 — Daily time limit enforced; Privacy Policy link added |
+| **Date** | 09 November 2026 |
 | **Author** | Product & Engineering Team |
 | **Status** | Draft — For Review (status column maintained by engineering) |
 | **Target platform** | iOS & Android (mobile-first) |
@@ -23,6 +23,7 @@ Kids Math Gaming App • Ages 3–6
 | 1.1 | 18 Jul 2026 | Implementation status added |
 | 1.2 | 31 Oct 2026 | Post-QA engineering pass: fixed a router bug that could strand new users on the splash screen during onboarding; corrected `pubspec.yaml` to stop declaring unused/missing asset directories and added the real sound-effect files that were silently missing; removed two Settings controls (Background Music, Daily Time Limit) that were visible but not wired to any actual behavior |
 | 1.3 | 02 Nov 2026 | Added in-app account deletion (new FR-46), required by Apple App Store Review Guideline 5.1.1(v) for apps that support account creation. Also fixed a bug found while testing it: creating a child profile could duplicate the new child in the in-memory profile list. |
+| 1.4 | 09 Nov 2026 | Implemented FR-41 (daily time limit) for real: a `DailyLimitStatus` derived from today's saved session durations now blocks entry to Gameplay at the router level once reached, surfacing a new gentle end-of-session screen (SCR-11) instead; the Settings control is re-added, now wired to real enforcement. Added FR-47: an accessible Privacy Policy link in Settings, opened via `url_launcher`. |
 
 ---
 
@@ -201,13 +202,14 @@ Status key — Implemented: built and working | Partial: built but incomplete/no
 | ID | Requirement | Priority | Screen | Status |
 |---|---|---|---|---|
 | FR-40 | Settings shall allow editing of child name, age, and avatar. | High | Settings | Partial — Name and age are editable; avatar is not editable from Settings. |
-| FR-41 | A daily time limit (5–60 minutes) shall be configurable; the app shall display a gentle end-of-session screen when reached. | High | Settings | **Not Implemented** — The control was previously visible and persisted a value, but nothing enforced it and no end-of-session screen existed. Removed from the Settings UI on 31 Oct 2026 to avoid shipping a non-functional control (App Store review risk); the underlying `dailyTimeLimitMinutes` setting still persists but is no longer exposed. Re-add to UI once enforcement is implemented. |
+| FR-41 | A daily time limit (5–60 minutes) shall be configurable; the app shall display a gentle end-of-session screen when reached. | High | Settings | Implemented, 09 Nov 2026 — Control re-added to Settings (slider, 5–60 min) and now backed by real enforcement: `dailyLimitStatusProvider` sums today's saved `SessionResult.durationSeconds` for the active child and compares against the configured limit; `app_router.dart`'s redirect blocks any navigation to the Gameplay route once reached and sends the child to a new gentle end-of-session screen (`TimeLimitScreen`, SCR-11) instead. By design, a level already in progress when the limit is crossed is allowed to finish — enforcement happens at the next attempt to start a new level, not mid-question, to avoid an jarring interruption for a 3–6 year old. |
 | FR-42a | Sound effects shall be toggleable, and the toggle shall control real audio playback. | High | Settings | Implemented — Toggle was already wired up, but the five referenced sound-effect files (correct, incorrect, level complete, hint, sticker pop) did not exist in the repo, so the toggle had nothing to play. Fixed 31 Oct 2026: real CC0-licensed sound effects added at `assets/audio/sfx/`. |
 | FR-42b | Background music shall be toggleable, and the toggle shall control real audio playback. | Medium | Settings | Not Implemented — Toggle persisted a preference but no code path ever called `AudioService.startBackgroundMusic()`; toggling it had no effect. Removed from the Settings UI on 31 Oct 2026 pending an actual background-music implementation. |
 | FR-43 | A 'hints always on' toggle shall force mascot hints to appear after every question rather than on a delay. | Medium | Settings | Implemented |
 | FR-44 | A progress reset option shall be available behind a confirmation dialog. | Medium | Settings | Implemented |
 | FR-45 | The parent's email address shall be editable with re-verification. | Low | Settings | Not Implemented — UI entry exists but its tap handler is an empty stub; no re-verification flow. |
 | FR-46 | Parents shall be able to permanently delete their account, all child profiles, and all associated progress data from within the app, behind a confirmation dialog. | High | Settings | Implemented — Added 02 Nov 2026 per Apple App Store Review Guideline 5.1.1(v), which requires in-app account deletion for any app that supports in-app account creation; this was previously missing entirely. |
+| FR-47 | An accessible Privacy Policy link shall be available within the parent/settings area. | High | Settings | Implemented, 09 Nov 2026 — Added under a new "Legal" section in Settings, opened in an external browser via `url_launcher`. Points to `AppConstants.privacyPolicyUrl` (https://multiplexer-lab.com/privacy-policy.html); the website content itself is outside this repo and must independently describe locally-stored parent data, account deletion, and the parental gate (see §4.4 note below). |
 
 ---
 
@@ -243,6 +245,7 @@ Each item below is annotated with its implementation status, verified against th
 - No third-party analytics, advertising, or tracking SDKs shall be included — **[Implemented]**
 - Parent PIN shall be required to access any parent-facing screen — **[Implemented]**
 - Users shall be able to delete their account and associated data from within the app (Apple Guideline 5.1.1v) — **[Implemented, added 02 Nov 2026]** See FR-46.
+- An accessible Privacy Policy link shall be available in the parent/settings area — **[Implemented, added 09 Nov 2026]** See FR-47. The linked page's *content* must accurately state that the parent's email and hashed password are stored only on-device (no server, no third party ever receives them), that account deletion is available in-app (FR-46), and how the PIN-gated parental gate works — this is a website-content task outside this repo and still needs doing.
 - App shall comply with COPPA (US), GDPR-K (EU), and UK GDPR (UK) at launch — **[Not Verified]** Legal/compliance audit item, not code-verifiable.
 - App Store age rating: 4+ (Apple) / Everyone (Google Play) — **[Not Verified]** App store listing configuration, outside app code.
 
@@ -298,7 +301,8 @@ The following table summarises every screen defined in this SRS.
 | SCR-07 | Sticker Book | Sticker collection browser |
 | SCR-08 | Progress | Per-topic progress bars and activity history |
 | SCR-09 | Parent Dashboard | Weekly summary metrics and child profile management |
-| SCR-10 | Settings | Time limits, sound, avatar, account, reset |
+| SCR-10 | Settings | Time limits, sound, avatar, account, reset, Privacy Policy |
+| SCR-11 | Time Limit | Gentle end-of-session screen shown when the daily time limit is reached |
 
 ---
 

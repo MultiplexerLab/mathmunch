@@ -31,6 +31,10 @@ class AppConstants {
   // Parent PIN length
   static const int parentPinLength = 4;
 
+  // Legal
+  static const String privacyPolicyUrl =
+      'https://multiplexer-lab.com/privacy-policy.html';
+
   // Recent activity feed size
   static const int activityFeedSize = 10;
 

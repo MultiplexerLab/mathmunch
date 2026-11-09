@@ -8,6 +8,7 @@ import 'package:mathmunch/data/repositories/auth_repository.dart';
 import 'package:mathmunch/data/repositories/child_repository.dart';
 import 'package:mathmunch/data/repositories/progress_repository.dart';
 import 'package:mathmunch/features/settings/providers/settings_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// SCR-10 — Settings: time limits, sound, avatar, account, reset. FR-40 to FR-45.
 class SettingsScreen extends ConsumerWidget {
@@ -67,6 +68,29 @@ class SettingsScreen extends ConsumerWidget {
             secondary: const Icon(Icons.lightbulb_outline),
           ),
 
+          // ---- Parental Controls ----
+          // FR-41 — re-added once backed by real enforcement (see
+          // dailyLimitStatusProvider / app_router.dart redirect).
+          const _Section('Parental Controls'),
+          ListTile(
+            leading: const Icon(Icons.timer_outlined),
+            title: const Text('Daily Time Limit'),
+            subtitle: Text('${settings.dailyTimeLimitMinutes} minutes a day'),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Slider(
+              value: settings.dailyTimeLimitMinutes.toDouble(),
+              min: AppConstants.minTimeLimitMinutes.toDouble(),
+              max: AppConstants.maxTimeLimitMinutes.toDouble(),
+              divisions: (AppConstants.maxTimeLimitMinutes -
+                      AppConstants.minTimeLimitMinutes) ~/
+                  5,
+              label: '${settings.dailyTimeLimitMinutes} min',
+              onChanged: (v) => notifier.setTimeLimit(v.round()),
+            ),
+          ),
+
           // ---- Account ----
           const _Section('Account'),
           ListTile(
@@ -75,6 +99,15 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: const Text('Tap to update'),
             trailing: const Icon(Icons.chevron_right),
             onTap: () {}, // FR-45 — editable with re-verification
+          ),
+
+          // ---- Legal ----
+          const _Section('Legal'),
+          ListTile(
+            leading: const Icon(Icons.privacy_tip_outlined),
+            title: const Text('Privacy Policy'),
+            trailing: const Icon(Icons.open_in_new, size: 18),
+            onTap: () => _openPrivacyPolicy(context),
           ),
 
           // FR-44 — Reset progress
@@ -100,6 +133,16 @@ class SettingsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openPrivacyPolicy(BuildContext context) async {
+    final uri = Uri.parse(AppConstants.privacyPolicyUrl);
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't open the Privacy Policy.")),
+      );
+    }
   }
 
   Future<void> _editName(
