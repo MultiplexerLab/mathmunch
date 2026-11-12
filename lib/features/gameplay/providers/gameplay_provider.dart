@@ -156,13 +156,19 @@ class GameplayNotifier extends FamilyNotifier<GameplayState, String> {
     final narration = ref.read(narrationServiceProvider);
     if (isCorrect) {
       audio.playCorrect();
-      narration.speak('Amazing! Well done!');
     } else {
       audio.playIncorrect();
-      narration.speak('Oops! Try again!');
     }
 
-    await Future.delayed(const Duration(milliseconds: 1200));
+    // Wait for the feedback to be fully spoken before advancing -- otherwise
+    // the next question's prompt (or its own narration.speak(), which stops
+    // any in-progress utterance first) cuts the feedback off mid-sentence.
+    // Still enforce the minimum so the correct/incorrect animation has time
+    // to play when narration is disabled (speak() then returns immediately).
+    await Future.wait([
+      Future.delayed(const Duration(milliseconds: 1200)),
+      narration.speak(isCorrect ? 'Amazing! Well done!' : 'Oops! Try again!'),
+    ]);
     _advance();
   }
 
