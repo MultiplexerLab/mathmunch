@@ -9,8 +9,8 @@ Kids Math Gaming App • Ages 3–6
 | | |
 |---|---|
 | **Document ref** | MM-SRS-001 |
-| **Version** | 1.4 — Daily time limit enforced; Privacy Policy link added |
-| **Date** | 09 November 2026 |
+| **Version** | 1.5 — Gameplay UX fixes: shapes, answer text, narration timing |
+| **Date** | 12 November 2026 |
 | **Author** | Product & Engineering Team |
 | **Status** | Draft — For Review (status column maintained by engineering) |
 | **Target platform** | iOS & Android (mobile-first) |
@@ -24,6 +24,7 @@ Kids Math Gaming App • Ages 3–6
 | 1.2 | 31 Oct 2026 | Post-QA engineering pass: fixed a router bug that could strand new users on the splash screen during onboarding; corrected `pubspec.yaml` to stop declaring unused/missing asset directories and added the real sound-effect files that were silently missing; removed two Settings controls (Background Music, Daily Time Limit) that were visible but not wired to any actual behavior |
 | 1.3 | 02 Nov 2026 | Added in-app account deletion (new FR-46), required by Apple App Store Review Guideline 5.1.1(v) for apps that support account creation. Also fixed a bug found while testing it: creating a child profile could duplicate the new child in the in-memory profile list. |
 | 1.4 | 09 Nov 2026 | Implemented FR-41 (daily time limit) for real: a `DailyLimitStatus` derived from today's saved session durations now blocks entry to Gameplay at the router level once reached, surfacing a new gentle end-of-session screen (SCR-11) instead; the Settings control is re-added, now wired to real enforcement. Added FR-47: an accessible Privacy Policy link in Settings, opened via `url_launcher`. |
+| 1.5 | 12 Nov 2026 | Reported from real device testing: Shapes questions showed a generic decorative icon stacked on top of the actual shape, displaying two unrelated shapes and confusing which one the question meant (FR-16); long answer labels (e.g. "Rectangle") wrapped mid-word in the narrow 3-column layout with no padding (FR-17). Both fixed. Also fixed a narration bug found separately: the correct/incorrect feedback speech could be cut off mid-sentence by the next question's own narration starting on a fixed timer rather than waiting for the feedback to finish speaking (FR-18, FR-19, FR-22). |
 
 ---
 
@@ -160,6 +161,12 @@ Status key — Implemented: built and working | Partial: built but incomplete/no
 | FR-21 | A progress bar shall indicate current question position within the level (e.g. Q 2/5). | Medium | Gameplay | Implemented |
 | FR-22 | No reading shall be required to play; all instructions shall be delivered via audio narration. | High | Gameplay | Implemented |
 | FR-23 | The gameplay screen shall include a back button that returns to Level Select after confirmation. | Medium | Gameplay | Implemented |
+
+> **Engineering note (12 Nov 2026, FR-16):** real-device testing (screenshot from a parent) showed "Shapes Around Us" questions rendering two different shapes at once — a generic 🔷 placeholder icon (`QuestionWidget`'s fallback visual, meant to decorate operator questions like showing "+" above an addition problem) stacked above the actual shape the question was about (`displaySymbol`). Kids couldn't tell which shape the question meant. Fixed: shape-type questions now show only the real shape.
+
+> **Engineering note (12 Nov 2026, FR-17):** `AnswerChoiceButton` had no internal padding and allowed only `maxLines: 2` with default wrapping, so longer answers (e.g. "Rectangle") could wrap mid-word ("Rectangl" / "e") in the narrow 3-column layout. Fixed: the label now scales down via `FittedBox` to fit on one line instead of wrapping.
+
+> **Engineering note (12 Nov 2026, FR-18/FR-19/FR-22):** the "Amazing!"/"Oops!" feedback narration was fired without being awaited, and the app advanced to the next question after a fixed 1200ms delay regardless of how long the phrase actually took to speak at the slower child-friendly rate. Advancing then triggers the next question's own narration, which stops any in-progress speech first — cutting the feedback off mid-sentence. Also, `flutter_tts` wasn't configured with `awaitSpeakCompletion(true)`, so even awaiting it wouldn't have helped: its Future resolved once the utterance was queued, not once it finished. Fixed both: enabled `awaitSpeakCompletion(true)`, and the app now waits for the feedback speech together with the 1200ms floor (whichever is longer) before advancing.
 
 ### 3.5 Reward & progression
 
