@@ -19,6 +19,11 @@ class NarrationService {
     await _tts.setSpeechRate(0.45); // standard is ~0.5; 0.45 is gentler
     await _tts.setVolume(1.0);
     await _tts.setPitch(1.1); // warmer, friendly pitch for young listeners
+    // Without this, speak()'s Future resolves once speech is queued, not
+    // once it's actually finished -- callers that need to wait for the
+    // utterance to truly finish (e.g. before advancing to the next
+    // question) would otherwise race ahead of the audio.
+    await _tts.awaitSpeakCompletion(true);
   }
 
   void setEnabled(bool value) {
