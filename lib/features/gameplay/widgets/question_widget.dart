@@ -25,15 +25,21 @@ class QuestionWidget extends StatelessWidget {
               question.visualAsset!,
               height: 80,
               fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) =>
-                  Text(_typeEmoji(question.type), style: const TextStyle(fontSize: 56)),
+              errorBuilder: (_, __, ___) => question.type == 'shapes'
+                  ? const SizedBox.shrink()
+                  : Text(_typeEmoji(question.type),
+                      style: const TextStyle(fontSize: 56)),
             )
           else if (question.type == 'counting')
             _CountingVisual(
               count: int.tryParse(question.displaySymbol) ?? 1,
               emoji: '🍎',
             )
-          else
+          // Shape questions show the shape itself as displaySymbol below —
+          // showing the generic category icon here too (e.g. 🔷) displays a
+          // second, unrelated shape alongside the real answer and confuses
+          // the "what shape is this?" question.
+          else if (question.type != 'shapes')
             Text(
               _typeEmoji(question.type),
               style: const TextStyle(fontSize: 56),
@@ -63,14 +69,15 @@ class QuestionWidget extends StatelessWidget {
     );
   }
 
+  // 'counting' and 'shapes' never reach this -- counting uses _CountingVisual,
+  // and shapes shows displaySymbol alone (the generic icon would otherwise
+  // render a second, unrelated shape next to the real answer).
   String _typeEmoji(String type) {
     return switch (type) {
-      'counting' => '🍎',
       'addition' => '➕',
       'subtraction' => '➖',
       'multiplication' => '✖️',
       'division' => '➗',
-      'shapes' => '🔷',
       _ => '❓',
     };
   }

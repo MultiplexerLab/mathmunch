@@ -47,15 +47,23 @@ class AnswerChoiceButton extends StatelessWidget {
           ],
         ),
         alignment: Alignment.center,
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: state != null ? Colors.white : AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
-              ),
-          textAlign: TextAlign.center,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          // FittedBox scales the word down to fit on one line instead of
+          // wrapping mid-word (e.g. "Rectangl" / "e") when a long answer
+          // doesn't fit a narrow 3-column button at full size.
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: state != null ? Colors.white : AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
+          ),
         ),
       ),
     );
