@@ -19,13 +19,37 @@ class GameplayScreen extends ConsumerStatefulWidget {
   ConsumerState<GameplayScreen> createState() => _GameplayScreenState();
 }
 
-class _GameplayScreenState extends ConsumerState<GameplayScreen> {
+class _GameplayScreenState extends ConsumerState<GameplayScreen>
+    with WidgetsBindingObserver {
+  GameplayNotifier? _notifier;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(gameplayProvider(widget.levelId).notifier).startQuestion();
+      if (!mounted) return;
+      _notifier = ref.read(gameplayProvider(widget.levelId).notifier);
+      _notifier!.startQuestion();
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final notifier = _notifier;
+    if (notifier == null) return;
+    if (state == AppLifecycleState.resumed) {
+      notifier.resume();
+    } else {
+      notifier.pause();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _notifier?.pause();
+    super.dispose();
   }
 
   @override
@@ -180,6 +204,8 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
   }
 
   Future<void> _confirmExit(BuildContext context) async {
+    final notifier = ref.read(gameplayProvider(widget.levelId).notifier);
+    notifier.pause();
     final leave = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -196,6 +222,11 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
         ],
       ),
     );
-    if (leave == true && context.mounted) context.pop();
+    if (!context.mounted) return;
+    if (leave == true) {
+      context.pop();
+    } else {
+      notifier.resume();
+    }
   }
 }
