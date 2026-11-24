@@ -35,18 +35,21 @@ class QuestionWidget extends StatelessWidget {
               count: int.tryParse(question.displaySymbol) ?? 1,
               emoji: '🍎',
             )
-          // Shape questions show the shape itself as displaySymbol below —
-          // showing the generic category icon here too (e.g. 🔷) displays a
-          // second, unrelated shape alongside the real answer and confuses
-          // the "what shape is this?" question.
-          else if (question.type != 'shapes')
+          // Shown large and alone in its own card -- a small inline glyph
+          // next to the generic category icon wasn't eye-catching enough
+          // for kids to engage with, and showing displaySymbol again below
+          // would just repeat the same shape a second time.
+          else if (question.type == 'shapes')
+            _ShapeVisual(glyph: question.displaySymbol)
+          else
             Text(
               _typeEmoji(question.type),
               style: const TextStyle(fontSize: 56),
             ),
-          // For counting questions the visual already IS the question —
-          // showing the number would give the answer away.
-          if (question.type != 'counting') ...[
+          // For counting and shapes questions the visual already IS the
+          // question -- showing displaySymbol again would be redundant
+          // (counting) or give the answer away a second time (shapes).
+          if (question.type != 'counting' && question.type != 'shapes') ...[
             const SizedBox(height: 12),
             Text(
               question.displaySymbol,
@@ -80,6 +83,35 @@ class QuestionWidget extends StatelessWidget {
       'division' => '➗',
       _ => '❓',
     };
+  }
+}
+
+/// Large, eye-catching presentation of a shape for "what shape is this?"
+/// questions -- a plain inline glyph was too small to grab a young child's
+/// attention, so the shape is shown big and alone on a bright card.
+class _ShapeVisual extends StatelessWidget {
+  final String glyph;
+
+  const _ShapeVisual({required this.glyph});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 190,
+      height: 190,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Text(glyph, style: const TextStyle(fontSize: 130)),
+    )
+        .animate()
+        .fadeIn(duration: 250.ms)
+        .scaleXY(begin: 0.7, end: 1.0, duration: 400.ms, curve: Curves.elasticOut);
   }
 }
 
