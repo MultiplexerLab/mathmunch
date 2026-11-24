@@ -4,7 +4,7 @@ import 'package:mathmunch/data/repositories/progress_repository.dart';
 import 'package:mathmunch/features/settings/providers/settings_provider.dart';
 
 /// FR-41 — status of the active child's parent-configured daily time limit,
-/// derived from today's saved session durations.
+/// derived from today's persisted foreground play time.
 class DailyLimitStatus {
   final bool reached;
   final int minutesPlayedToday;
@@ -29,16 +29,16 @@ DailyLimitStatus computeDailyLimitStatus({
   );
 }
 
-final dailyLimitStatusProvider = Provider<DailyLimitStatus>((ref) {
-  final child = ref.watch(activeChildProvider);
-  final limitMinutes = ref.watch(settingsProvider).dailyTimeLimitMinutes;
+DailyLimitStatus readDailyLimitStatus(Ref ref) {
+  final child = ref.read(activeChildProvider);
+  final limitMinutes = ref.read(settingsProvider).dailyTimeLimitMinutes;
   if (child == null) {
     return computeDailyLimitStatus(
         secondsPlayedToday: 0, limitMinutes: limitMinutes);
   }
-  final progress = ref.watch(progressRepositoryProvider);
+  final progress = ref.read(progressRepositoryProvider);
   return computeDailyLimitStatus(
     secondsPlayedToday: progress.secondsPlayedToday(child.id),
     limitMinutes: limitMinutes,
   );
-});
+}

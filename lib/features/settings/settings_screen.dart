@@ -70,7 +70,7 @@ class SettingsScreen extends ConsumerWidget {
 
           // ---- Parental Controls ----
           // FR-41 — re-added once backed by real enforcement (see
-          // dailyLimitStatusProvider / app_router.dart redirect).
+          // readDailyLimitStatus / app_router.dart redirect).
           const _Section('Parental Controls'),
           ListTile(
             leading: const Icon(Icons.timer_outlined),

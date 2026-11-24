@@ -75,7 +75,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (isSplash) return null;
       if (!isLoggedIn && !isOnboarding) return AppRoutes.onboarding;
-      if (isLoggedIn && !hasChildren &&
+      if (isLoggedIn &&
+          !hasChildren &&
           state.matchedLocation != AppRoutes.childSetup) {
         return AppRoutes.childSetup;
       }
@@ -85,9 +86,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // reached, regardless of entry point (Home, Reward "Play Again", etc).
       // A level already in progress is left alone; the limit is enforced at
       // the next natural breakpoint rather than interrupting mid-question.
-      if (state.matchedLocation == AppRoutes.gameplay &&
-          ref.read(dailyLimitStatusProvider).reached) {
-        return AppRoutes.timeLimit;
+      if (state.fullPath == AppRoutes.gameplay) {
+        if (readDailyLimitStatus(ref).reached) {
+          return AppRoutes.timeLimit;
+        }
       }
 
       return null;

@@ -66,46 +66,78 @@ class GameplayState {
   }
 }
 
-class GameplayNotifier extends FamilyNotifier<GameplayState, String> {
+class GameplayNotifier
+    extends AutoDisposeFamilyNotifier<GameplayState, String> {
   Timer? _hintTimer;
   Timer? _elapsedTimer;
+  String? _childId;
+  bool _disposed = false;
+  bool _paused = false;
 
   @override
   GameplayState build(String levelId) {
-    ref.onDispose(_cleanup);
+    final narration = ref.read(narrationServiceProvider);
+    ref.onDispose(() {
+      _disposed = true;
+      _hintTimer?.cancel();
+      _elapsedTimer?.cancel();
+      narration.stop();
+    });
     final content = ref.read(contentRepositoryProvider);
     final level = content.levelById(levelId);
     if (level == null) return const GameplayState();
 
-    _startElapsedTimer();
-    final questions = level.questions
-        .map((q) {
-          final choices = List<String>.from(q.choices)..shuffle();
-          final correctAnswer = q.choices[q.correctIndex];
-          return Question(
-            id: q.id,
-            type: q.type,
-            audioPrompt: q.audioPrompt,
-            visualAsset: q.visualAsset,
-            displaySymbol: q.displaySymbol,
-            choices: choices,
-            correctIndex: choices.indexOf(correctAnswer),
-            difficulty: q.difficulty,
-          );
-        })
-        .toList()
+    _childId = ref.read(activeChildProvider)?.id;
+    final questions = level.questions.map((q) {
+      final choices = List<String>.from(q.choices)..shuffle();
+      final correctAnswer = q.choices[q.correctIndex];
+      return Question(
+        id: q.id,
+        type: q.type,
+        audioPrompt: q.audioPrompt,
+        visualAsset: q.visualAsset,
+        displaySymbol: q.displaySymbol,
+        choices: choices,
+        correctIndex: choices.indexOf(correctAnswer),
+        difficulty: q.difficulty,
+      );
+    }).toList()
       ..shuffle();
     return GameplayState(level: level, questions: questions);
   }
 
   void _startElapsedTimer() {
+    _elapsedTimer?.cancel();
+    if (state.isComplete) return;
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       state = state.copyWith(elapsedSeconds: state.elapsedSeconds + 1);
+      final childId = _childId;
+      if (childId != null) {
+        unawaited(
+            ref.read(progressRepositoryProvider).recordPlaySecond(childId));
+      }
     });
+  }
+
+  void pause() {
+    if (_disposed) return;
+    _paused = true;
+    _elapsedTimer?.cancel();
+    _hintTimer?.cancel();
+    ref.read(narrationServiceProvider).stop();
+  }
+
+  void resume() {
+    if (_disposed) return;
+    if (state.isComplete) return;
+    _paused = false;
+    _startElapsedTimer();
+    _resetHintTimer();
   }
 
   void _resetHintTimer() {
     _hintTimer?.cancel();
+    if (_paused) return;
 
     // Speak the question prompt — covers both the first question (via
     // startQuestion) and every subsequent one (via _advance).
@@ -132,6 +164,8 @@ class GameplayNotifier extends FamilyNotifier<GameplayState, String> {
   }
 
   void startQuestion() {
+    _paused = false;
+    _startElapsedTimer();
     state = state.copyWith(
       answerState: AnswerState.unanswered,
       showHint: false,
@@ -169,6 +203,7 @@ class GameplayNotifier extends FamilyNotifier<GameplayState, String> {
       Future.delayed(const Duration(milliseconds: 1200)),
       narration.speak(isCorrect ? 'Amazing! Well done!' : 'Oops! Try again!'),
     ]);
+    if (_disposed) return;
     _advance();
   }
 
@@ -187,42 +222,38 @@ class GameplayNotifier extends FamilyNotifier<GameplayState, String> {
   }
 
   Future<void> _complete() async {
-    _cleanup();
-    state = state.copyWith(isComplete: true);
+    pause();
     ref.read(audioServiceProvider).playLevelComplete();
 
     final child = ref.read(activeChildProvider);
+    final children = ref.read(childListProvider.notifier);
     final level = state.level!;
+    final stars = state.starsEarned;
+    final accuracy = state.accuracy;
+    final durationSeconds = state.elapsedSeconds;
     if (child != null) {
       final content = ref.read(contentRepositoryProvider);
       final world = content.worldForLevel(level.id);
       final progress = ref.read(progressRepositoryProvider);
-      await progress.saveStars(child.id, level.id, state.starsEarned);
+      await progress.saveStars(child.id, level.id, stars);
       await progress.saveSession(
         childId: child.id,
         levelId: level.id,
         worldId: level.worldId,
         worldName: world?.name ?? level.worldId,
         levelTitle: level.title,
-        accuracy: state.accuracy,
-        starsEarned: state.starsEarned,
-        durationSeconds: state.elapsedSeconds,
+        accuracy: accuracy,
+        starsEarned: stars,
+        durationSeconds: durationSeconds,
       );
-      await ref.read(childListProvider.notifier).addStars(child.id, state.starsEarned);
-      await ref.read(childListProvider.notifier).recordPlay(child.id);
+      await children.addStars(child.id, stars);
+      await children.recordPlay(child.id);
     }
-  }
-
-  void _cleanup() {
-    _hintTimer?.cancel();
-    _elapsedTimer?.cancel();
-    try {
-      ref.read(narrationServiceProvider).stop();
-    } catch (_) {}
+    if (!_disposed) state = state.copyWith(isComplete: true);
   }
 }
 
-final gameplayProvider =
-    NotifierProviderFamily<GameplayNotifier, GameplayState, String>(
+final gameplayProvider = NotifierProvider.autoDispose
+    .family<GameplayNotifier, GameplayState, String>(
   GameplayNotifier.new,
 );

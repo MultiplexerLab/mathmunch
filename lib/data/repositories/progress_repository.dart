@@ -7,9 +7,9 @@ import 'package:uuid/uuid.dart';
 class ProgressRepository {
   int getStars(String childId, String levelId) {
     return HiveService.progressBox.get(
-          '${childId}_$levelId',
-          defaultValue: 0,
-        ) as int;
+      '${childId}_$levelId',
+      defaultValue: 0,
+    ) as int;
   }
 
   Future<void> saveStars(String childId, String levelId, int stars) async {
@@ -73,7 +73,8 @@ class ProgressRepository {
 
   /// Counts consecutive recent sessions for a topic with accuracy below threshold.
   int consecutiveLowAccuracy(String childId, String topic) {
-    final sessions = recentSessionsForTopic(childId, topic, limit: AppConstants.adaptiveConsecutiveFailures + 1);
+    final sessions = recentSessionsForTopic(childId, topic,
+        limit: AppConstants.adaptiveConsecutiveFailures + 1);
     int count = 0;
     for (final s in sessions) {
       if (s.accuracy < AppConstants.adaptiveAccuracyThreshold) {
@@ -89,7 +90,8 @@ class ProgressRepository {
     final result = <String, int>{};
     for (final key in HiveService.progressBox.keys) {
       final keyStr = key.toString();
-      if (keyStr.startsWith('${childId}_')) {
+      if (keyStr.startsWith('${childId}_') &&
+          !keyStr.startsWith('${childId}_daily-time_')) {
         final levelId = keyStr.substring('${childId}_'.length);
         result[levelId] =
             HiveService.progressBox.get(key, defaultValue: 0) as int;
@@ -100,8 +102,10 @@ class ProgressRepository {
 
   /// Total seconds played today across all sessions, for FR-41 (daily
   /// time limit). "Today" is the device's local calendar day.
-  int secondsPlayedToday(String childId) {
-    final now = DateTime.now();
+  int secondsPlayedToday(String childId, {DateTime? at}) {
+    final now = at ?? DateTime.now();
+    final stored = HiveService.progressBox.get(_dailyTimeKey(childId, now));
+    if (stored is int) return stored;
     return HiveService.sessionsBox.values
         .where((s) =>
             s.childId == childId &&
@@ -109,6 +113,17 @@ class ProgressRepository {
             s.playedAt.month == now.month &&
             s.playedAt.day == now.day)
         .fold<int>(0, (sum, s) => sum + s.durationSeconds);
+  }
+
+  String _dailyTimeKey(String childId, DateTime day) =>
+      '${childId}_daily-time_${day.year}-${day.month}-${day.day}';
+
+  Future<void> recordPlaySecond(String childId, {DateTime? at}) {
+    final now = at ?? DateTime.now();
+    return HiveService.progressBox.put(
+      _dailyTimeKey(childId, now),
+      secondsPlayedToday(childId, at: now) + 1,
+    );
   }
 
   Future<void> resetAllProgress(String childId) async {
