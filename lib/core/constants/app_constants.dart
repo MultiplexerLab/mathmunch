@@ -6,7 +6,7 @@ class AppConstants {
   static const int maxQuestionsPerLevel = 8;
   static const int hintDelaySeconds = 8;
   static const int minChildAge = 3;
-  static const int maxChildAge = 6;
+  static const int maxChildAge = 10;
   static const int maxChildProfiles = 4;
 
   // Stars thresholds (accuracy %)

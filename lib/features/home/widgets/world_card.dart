@@ -118,6 +118,7 @@ class WorldCard extends StatelessWidget {
       'subtraction' => '🐒',
       'multiplication' => '🚀',
       'division' => '💎',
+      'challenge' => '🏆',
       _ => '🎮',
     };
   }

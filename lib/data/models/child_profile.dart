@@ -11,7 +11,7 @@ class ChildProfile extends HiveObject {
   final String name;
 
   @HiveField(2)
-  final int age; // 3–6
+  final int age; // 3–10
 
   @HiveField(3)
   final String avatarId;

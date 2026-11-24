@@ -26,6 +26,7 @@ class AppColors {
   static const Color worldJungleMath = Color(0xFFFFB347);
   static const Color worldStarFactory = Color(0xFFFF6B9D);
   static const Color worldTreasureIsland = Color(0xFF45B7AA);
+  static const Color worldChallengePeak = Color(0xFF6C5CE7);
 
   // Feedback
   static const Color correct = Color(0xFF56C271);

@@ -262,6 +262,55 @@ class ContentRepository {
           ),
         ],
       ),
+
+      // Unlocked only after completing every earlier world -- genuinely hard
+      // multi-digit problems for the older end of the app's audience (ages
+      // 6-10) who've outgrown the single-digit content above.
+      World(
+        id: 'world_challenge_peak',
+        name: 'Challenge Peak',
+        description: 'Super-hard puzzles for big math brains!',
+        topic: 'challenge',
+        iconAsset: 'assets/images/worlds/challenge_peak_icon.png',
+        backgroundAsset: 'assets/images/worlds/challenge_peak_bg.png',
+        colorValue: AppColors.worldChallengePeak.toARGB32(),
+        sortOrder: 6,
+        prerequisiteWorldId: 'world_treasure_island',
+        levels: [
+          Level(
+            id: 'cp_level_1',
+            worldId: 'world_challenge_peak',
+            title: 'Big Addition',
+            difficulty: 3,
+            sortOrder: 0,
+            questions: _hardAdditionQuestions(difficulty: 3),
+          ),
+          Level(
+            id: 'cp_level_2',
+            worldId: 'world_challenge_peak',
+            title: 'Tricky Subtraction',
+            difficulty: 3,
+            sortOrder: 1,
+            questions: _hardSubtractionQuestions(difficulty: 3),
+          ),
+          Level(
+            id: 'cp_level_3',
+            worldId: 'world_challenge_peak',
+            title: 'Times Tables Challenge',
+            difficulty: 3,
+            sortOrder: 2,
+            questions: _hardMultiplicationQuestions(difficulty: 3),
+          ),
+          Level(
+            id: 'cp_level_4',
+            worldId: 'world_challenge_peak',
+            title: 'Division Challenge',
+            difficulty: 3,
+            sortOrder: 3,
+            questions: _hardDivisionQuestions(difficulty: 3),
+          ),
+        ],
+      ),
     ];
   }
 
@@ -457,6 +506,93 @@ class ContentRepository {
   }
 
   // ---------------------------------------------------------------------------
+  // "Challenge Peak" question builders -- two-digit/larger-number problems
+  // for the older end of the app's audience (ages 6-10). Curated by hand
+  // rather than generated, since regrouping/carrying only shows up with
+  // specific number pairs.
+  // ---------------------------------------------------------------------------
+
+  static List<Question> _hardAdditionQuestions({required int difficulty}) {
+    // All pairs require carrying (ones digits sum >= 10).
+    const pairs = [(27, 38), (45, 29), (56, 37), (64, 28), (73, 19), (48, 46)];
+    return List.generate(pairs.length, (i) {
+      final (a, b) = pairs[i];
+      final sum = a + b;
+      return Question(
+        id: 'hadd_$i',
+        type: 'addition',
+        audioPrompt: 'What is $a plus $b?',
+        displaySymbol: '$a + $b = ?',
+        choices: ['${sum - 10}', '$sum', '${sum + 10}'],
+        correctIndex: 1,
+        difficulty: difficulty,
+      );
+    });
+  }
+
+  static List<Question> _hardSubtractionQuestions({required int difficulty}) {
+    // All pairs require borrowing (ones digit of a < ones digit of b).
+    const pairs = [(52, 27), (81, 39), (64, 28), (93, 47), (76, 29), (85, 58)];
+    return List.generate(pairs.length, (i) {
+      final (a, b) = pairs[i];
+      final result = a - b;
+      final wrong1 = result - 10 < 0 ? result + 11 : result - 10;
+      return Question(
+        id: 'hsub_$i',
+        type: 'subtraction',
+        audioPrompt: 'What is $a take away $b?',
+        displaySymbol: '$a - $b = ?',
+        choices: ['$wrong1', '$result', '${result + 10}'],
+        correctIndex: 1,
+        difficulty: difficulty,
+      );
+    });
+  }
+
+  static List<Question> _hardMultiplicationQuestions({required int difficulty}) {
+    // Times tables 6-9, the ones kids usually find hardest to memorise.
+    const pairs = [(6, 7), (7, 8), (8, 9), (9, 6), (7, 9), (8, 8)];
+    return List.generate(pairs.length, (i) {
+      final (a, b) = pairs[i];
+      final product = a * b;
+      return Question(
+        id: 'hmul_$i',
+        type: 'multiplication',
+        audioPrompt: 'What is $a times $b?',
+        displaySymbol: '$a × $b = ?',
+        choices: ['${product - a}', '$product', '${product + a}'],
+        correctIndex: 1,
+        difficulty: difficulty,
+      );
+    });
+  }
+
+  static List<Question> _hardDivisionQuestions({required int difficulty}) {
+    // (dividend, divisor, quotient) -- larger divisors than the earlier
+    // Treasure Island world (divisor 2, 3, 5 only).
+    const triples = [
+      (56, 7, 8),
+      (63, 9, 7),
+      (72, 8, 9),
+      (54, 6, 9),
+      (81, 9, 9),
+      (48, 6, 8),
+    ];
+    return List.generate(triples.length, (i) {
+      final (dividend, divisor, quotient) = triples[i];
+      return Question(
+        id: 'hdiv_$i',
+        type: 'division',
+        audioPrompt: 'What is $dividend shared between $divisor?',
+        displaySymbol: '$dividend ÷ $divisor = ?',
+        choices: ['${quotient - 1}', '$quotient', '${quotient + 1}'],
+        correctIndex: 1,
+        difficulty: difficulty,
+      );
+    });
+  }
+
+  // ---------------------------------------------------------------------------
   // Sticker definitions
   // ---------------------------------------------------------------------------
 
@@ -469,6 +605,7 @@ class ContentRepository {
       'world_jungle': ['Monkey', 'Tiger', 'Parrot', 'Frog', 'Snake', 'Elephant', 'Lion', 'Butterfly'],
       'world_star_factory': ['Star', 'Rocket', 'Robot', 'Gear', 'Diamond', 'Crystal', 'Lightning', 'Crown'],
       'world_treasure_island': ['Chest', 'Coin', 'Map', 'Compass', 'Anchor', 'Ship', 'Parrot', 'Gem'],
+      'world_challenge_peak': ['Trophy', 'Medal', 'Brain', 'Mountain', 'Flag', 'Lightbulb', 'Telescope', 'Gold Star'],
     };
 
     int sort = 0;

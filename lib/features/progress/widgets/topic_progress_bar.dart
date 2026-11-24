@@ -72,6 +72,7 @@ class TopicProgressBar extends StatelessWidget {
         'addition' => 'Addition',
         'shapes' => 'Shapes',
         'subtraction' => 'Subtraction',
+        'challenge' => 'Challenge Peak',
         _ => t,
       };
 
@@ -80,6 +81,7 @@ class TopicProgressBar extends StatelessWidget {
         'addition' => '➕',
         'shapes' => '🔷',
         'subtraction' => '➖',
+        'challenge' => '🏆',
         _ => '📚',
       };
 
@@ -88,6 +90,7 @@ class TopicProgressBar extends StatelessWidget {
         'addition' => AppColors.worldOceanCount,
         'shapes' => AppColors.worldSpaceShapes,
         'subtraction' => AppColors.worldJungleMath,
+        'challenge' => AppColors.worldChallengePeak,
         _ => AppColors.primary,
       };
 }
