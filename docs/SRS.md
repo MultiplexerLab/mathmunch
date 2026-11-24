@@ -2,15 +2,15 @@
 
 ## Software Requirements Specification (SRS)
 
-Kids Math Gaming App • Ages 3–6
+Kids Math Gaming App • Ages 3–10
 
 ---
 
 | | |
 |---|---|
 | **Document ref** | MM-SRS-001 |
-| **Version** | 1.5 — Gameplay UX fixes: shapes, answer text, narration timing |
-| **Date** | 12 November 2026 |
+| **Version** | 1.6 — Age range extended to 10; Challenge Peak world added |
+| **Date** | 24 November 2026 |
 | **Author** | Product & Engineering Team |
 | **Status** | Draft — For Review (status column maintained by engineering) |
 | **Target platform** | iOS & Android (mobile-first) |
@@ -25,6 +25,7 @@ Kids Math Gaming App • Ages 3–6
 | 1.3 | 02 Nov 2026 | Added in-app account deletion (new FR-46), required by Apple App Store Review Guideline 5.1.1(v) for apps that support account creation. Also fixed a bug found while testing it: creating a child profile could duplicate the new child in the in-memory profile list. |
 | 1.4 | 09 Nov 2026 | Implemented FR-41 (daily time limit) for real: a `DailyLimitStatus` derived from today's saved session durations now blocks entry to Gameplay at the router level once reached, surfacing a new gentle end-of-session screen (SCR-11) instead; the Settings control is re-added, now wired to real enforcement. Added FR-47: an accessible Privacy Policy link in Settings, opened via `url_launcher`. |
 | 1.5 | 12 Nov 2026 | Reported from real device testing: Shapes questions showed a generic decorative icon stacked on top of the actual shape, displaying two unrelated shapes and confusing which one the question meant (FR-16); long answer labels (e.g. "Rectangle") wrapped mid-word in the narrow 3-column layout with no padding (FR-17). Both fixed. Also fixed a narration bug found separately: the correct/incorrect feedback speech could be cut off mid-sentence by the next question's own narration starting on a fixed timer rather than waiting for the feedback to finish speaking (FR-18, FR-19, FR-22). |
+| 1.6 | 24 Nov 2026 | Enlarged the shape visual on shape questions (FR-16) — a small inline glyph wasn't eye-catching enough; it's now a large glyph on its own circular card with an entrance animation. Extended the app's target age range from 3–6 to 3–10 (FR-03, FR-40, `AppConstants.maxChildAge`) and added a new World, "Challenge Peak" (new FR-48), with deliberately hard two-digit addition/subtraction, 6–9 times tables, and larger-divisor division — gated behind completing every earlier world, for older/more advanced kids who've outgrown the single-digit content. |
 
 ---
 
@@ -32,11 +33,11 @@ Kids Math Gaming App • Ages 3–6
 
 ### 1.1 Purpose
 
-This Software Requirements Specification defines the functional and non-functional requirements for MathMunch, a mobile math gaming application designed for children aged 3–6. The document serves as a contractual reference between stakeholders, designers, and the development team throughout the product lifecycle.
+This Software Requirements Specification defines the functional and non-functional requirements for MathMunch, a mobile math gaming application designed for children aged 3–10. The document serves as a contractual reference between stakeholders, designers, and the development team throughout the product lifecycle.
 
 ### 1.2 Scope
 
-MathMunch is a mobile-first application (iOS and Android) that delivers curriculum-aligned early mathematics through interactive, story-driven mini-games. The app targets pre-school and early primary children (ages 3–6) and their parents/guardians.
+MathMunch is a mobile-first application (iOS and Android) that delivers curriculum-aligned early mathematics through interactive, story-driven mini-games. The app targets pre-school through mid-primary children (ages 3–10) and their parents/guardians. *(Extended from 3–6 on 24 Nov 2026 — see v1.6 in the revision history and FR-48.)*
 
 **In scope:**
 - Child-facing gameplay, progression, and reward systems
@@ -121,7 +122,7 @@ Status key — Implemented: built and working | Partial: built but incomplete/no
 |---|---|---|---|---|
 | FR-01 | The app shall display a splash screen with app name, mascot, and two CTAs: 'Let's play' (child) and 'Parent / new account'. | High | Splash | Implemented |
 | FR-02 | New parent accounts shall require email address and password only. No social login. | High | Onboarding | Implemented |
-| FR-03 | The onboarding flow shall allow entry of child name, age (3–6), and avatar selection before first play. | High | Onboarding | Implemented |
+| FR-03 | The onboarding flow shall allow entry of child name, age (3–10), and avatar selection before first play. | High | Onboarding | Implemented — age range extended from 3–6 to 3–10 on 24 Nov 2026 (`AppConstants.maxChildAge`). |
 | FR-04 | The system shall support multiple child profiles under one parent account (minimum 4). | Medium | Onboarding | Implemented |
 | FR-05 | Returning users shall bypass onboarding and land directly on the Home screen. | High | Splash | Implemented |
 
@@ -167,6 +168,8 @@ Status key — Implemented: built and working | Partial: built but incomplete/no
 > **Engineering note (12 Nov 2026, FR-17):** `AnswerChoiceButton` had no internal padding and allowed only `maxLines: 2` with default wrapping, so longer answers (e.g. "Rectangle") could wrap mid-word ("Rectangl" / "e") in the narrow 3-column layout. Fixed: the label now scales down via `FittedBox` to fit on one line instead of wrapping.
 
 > **Engineering note (12 Nov 2026, FR-18/FR-19/FR-22):** the "Amazing!"/"Oops!" feedback narration was fired without being awaited, and the app advanced to the next question after a fixed 1200ms delay regardless of how long the phrase actually took to speak at the slower child-friendly rate. Advancing then triggers the next question's own narration, which stops any in-progress speech first — cutting the feedback off mid-sentence. Also, `flutter_tts` wasn't configured with `awaitSpeakCompletion(true)`, so even awaiting it wouldn't have helped: its Future resolved once the utterance was queued, not once it finished. Fixed both: enabled `awaitSpeakCompletion(true)`, and the app now waits for the feedback speech together with the 1200ms floor (whichever is longer) before advancing.
+
+> **Engineering note (24 Nov 2026, FR-16):** feedback that the shape visual still wasn't eye-catching enough for kids even after the 12 Nov fix above — it was a plain inline glyph at the same size as a math-equation symbol. Replaced with a dedicated large shape card: the glyph now renders at 130pt inside a 190×190 white circle with a drop shadow and a bouncy scale-in entrance, matching the visual weight of the counting world's object visuals.
 
 ### 3.5 Reward & progression
 
@@ -217,6 +220,12 @@ Status key — Implemented: built and working | Partial: built but incomplete/no
 | FR-45 | The parent's email address shall be editable with re-verification. | Low | Settings | Not Implemented — UI entry exists but its tap handler is an empty stub; no re-verification flow. |
 | FR-46 | Parents shall be able to permanently delete their account, all child profiles, and all associated progress data from within the app, behind a confirmation dialog. | High | Settings | Implemented — Added 02 Nov 2026 per Apple App Store Review Guideline 5.1.1(v), which requires in-app account deletion for any app that supports in-app account creation; this was previously missing entirely. |
 | FR-47 | An accessible Privacy Policy link shall be available within the parent/settings area. | High | Settings | Implemented, 09 Nov 2026 — Added under a new "Legal" section in Settings, opened in an external browser via `url_launcher`. Points to `AppConstants.privacyPolicyUrl` (https://multiplexer-lab.com/privacy-policy.html); the website content itself is outside this repo and must independently describe locally-stored parent data, account deletion, and the parental gate (see §4.4 note below). |
+
+### 3.10 Advanced challenge content
+
+| ID | Requirement | Priority | Screen | Status |
+|---|---|---|---|---|
+| FR-48 | A dedicated World shall offer deliberately hard, multi-digit math problems for the older end of the app's audience (ages 6–10) who have outgrown the single-digit content in earlier Worlds. | Medium | Home, Level Select, Gameplay | Implemented, 24 Nov 2026 — Added "Challenge Peak" (`world_challenge_peak`), unlocked only after reaching 60% completion on every earlier World (same unlock mechanism as FR-08). Four levels, all difficulty 3 (the app's existing hard tier — no new difficulty tier was introduced): two-digit addition requiring carrying, two-digit subtraction requiring borrowing, 6–9 times tables, and division with larger divisors (6–9) than Treasure Island's (2, 3, 5). Reuses the existing addition/subtraction/multiplication/division question types and UI rather than introducing a new question format, so no gameplay-screen changes were needed. |
 
 ---
 
